@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monthly Report - {{ stats.month_name }} {{ stats.year }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Monthly Report - {{ stats.month_name }} {{ stats.year }}</h1>
+
+    <form id="report-form" onsubmit="return false;">
+        <select name="year" id="year-select">
+            {% for year in years %}
+                <option value="{{ year }}" {% if year == default_year %}selected{% endif %}>{{ year }}</option>
+            {% endfor %}
+        </select>
+        <select name="month" id="month-select">
+            {% for num, name in all_months %}
+                <option value="{{ num }}" {% if num == default_month %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+        </select>
+        <button type="button" id="view-report-btn">View Report</button>
+    </form>
+
+    <div id="report-results">
+        #<h2>Summary</h2>
+        <p>Total Visits: {{ stats.total_visits }}</p>
+        <p>Unique Visitors: <span id="unique-visitors">{{ stats.unique_visitors }}</span></p>
+
+        <div style="width: 80%;">
+            <h2>Daily Breakdown</h2>
+            <canvas id="dailyChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Initialize chart variable
+        let chart = null;
+
+        // Function to initialize or update chart
+        function initChart(dailyData) {
+            const ctx = document.getElementById('dailyChart').getContext('2d');
+
+            // Destroy previous chart if it exists
+            if (chart) {
+                chart.destroy();
+            }
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dailyData.map(item => item.day),
+                    datasets: [{
+                        label: 'Visits per day',
+                        data: dailyData.map(item => item.count),
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Day of Month'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Visits'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Function to load and display report data
+        function loadReportData(year, month) {
+            $.ajax({
+                url: `/stats/monthly/${year}/${month}/`,
+                headers: {'X-Requested-With': 'XMLHttpRequest'},
+                success: function(data) {
+                    // Update the title
+                    $('#report-title').text(`Monthly Report - ${data.month_name} ${data.year}`);
+
+                    // Update summary data
+                    $('#total-visits').text(data.total_visits);
+                    $('#unique-visitors').text(data.unique_visitors);
+
+                    // Update the chart
+                    initChart(data.daily_breakdown);
+
+                    // Update URL
+                    window.history.pushState(null, '', `/stats/monthly/${year}/${month}/`);
+
+                    // Update dropdown selections
+                    $('#year-select').val(year);
+                    $('#month-select').val(month);
+                },
+                error: function() {
+                    alert('Failed to load report data');
+                }
+            });
+        }
+
+        // Handle form button click
+        $('#view-report-btn').on('click', function() {
+            const year = $('#year-select').val();
+            const month = $('#month-select').val();
+            loadReportData(year, month);
+        });
+
+        // Handle browser back/forward navigation
+        window.addEventListener('popstate', function() {
+            const pathParts = window.location.pathname.split('/');
+            if (pathParts.length >= 5 && pathParts[3] === 'monthly') {
+                const year = parseInt(pathParts[4]);
+                const month = parseInt(pathParts[5]);
+                loadReportData(year, month);
+            }
+        });
+
+        // Load initial data when page loads
+        $(document).ready(function() {
+            const pathParts = window.location.pathname.split('/');
+            let year, month;
+
+            if (pathParts.length >= 5 && pathParts[3] === 'monthly') {
+                year = parseInt(pathParts[4]);
+                month = parseInt(pathParts[5]);
+            } else {
+                // Default to current month if no specific month in URL
+                const now = new Date();
+                year = now.getFullYear();
+                month = now.getMonth() + 1;
+                // Update URL to show current month
+                window.history.replaceState(null, '', `/stats/monthly/${year}/${month}/`);
+            }
+
+            // Set dropdowns to correct values
+            $('#year-select').val(year);
+            $('#month-select').val(month);
+
+            // Load the data
+            loadReportData(year, month);
+        });
+    </script>
+</body>
+</html>
+
+
