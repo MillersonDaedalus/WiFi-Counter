@@ -3,14 +3,16 @@ from django.http import HttpResponse, JsonResponse
 from .models import Visit
 from datetime import datetime
 import calendar
+from django.conf import settings
 
 
 def count_and_redirect(request):
     # Record the visit
     Visit.record_visit(request)
+    redirect_url = settings.WIFICOUNTER_REDIRECT_URL
 
     # Redirect to your desired URL
-    return redirect('stats/all/')  # Change this to your target URL
+    return redirect(redirect_url)  # Change this to your target URL
 
 
 def monthly_report(request, year=None, month=None):
