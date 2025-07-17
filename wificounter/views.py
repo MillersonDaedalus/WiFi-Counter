@@ -10,7 +10,7 @@ def count_and_redirect(request):
     Visit.record_visit(request)
 
     # Redirect to your desired URL
-    return redirect('stats/all/')  # Change this to your target URL
+    return redirect('https://twinfallspubliclibrary.org/')  # Change this to your target URL
 
 
 def monthly_report(request, year=None, month=None):
