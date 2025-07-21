@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from counter.models import Visit
+from wificounter.models import Visit
 from datetime import datetime, timedelta
 import csv
 
