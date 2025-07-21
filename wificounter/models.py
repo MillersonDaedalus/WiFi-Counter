@@ -18,8 +18,14 @@ class Visit(models.Model):
 
     @classmethod
     def record_visit(cls, request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]  # Gets the first IP in the list
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+
         return cls.objects.create(
-            ip_address=request.META.get('REMOTE_ADDR'),
+            ip_address=ip,
             user_agent=request.META.get('HTTP_USER_AGENT', '')[:255]
         )
 
