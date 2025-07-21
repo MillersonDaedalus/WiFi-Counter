@@ -7,7 +7,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY}
       DEBUG: ${DEBUG}
     env_file:
       - .env
